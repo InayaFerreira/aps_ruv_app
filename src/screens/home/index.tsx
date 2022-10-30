@@ -1,13 +1,12 @@
 /* eslint-disable react-native/no-inline-styles */
 /* eslint-disable react-hooks/exhaustive-deps */
-import { ActivityIndicator, FlatList, Pressable } from 'react-native';
+import { ActivityIndicator, FlatList, ImageBackground } from 'react-native';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { ICidadeDados, WeatherService } from '@services/api/Weather';
 
-import ArIcon from '@icons/ar.svg';
+import UvIcon from '@icons/uv.svg';
 
-import { getOpacityByPress } from '@utils/styles';
 import { formatApiDate } from '@utils/date';
 import { COLORS } from '@styles/colors';
 
@@ -15,12 +14,7 @@ import Accordion from '@molecules/Accordion';
 import Spacer from '@atoms/Spacer';
 import Dropdown from '@atoms/Dropdown';
 import CustomText from '@atoms/CustomText';
-import {
-  ContainerDado,
-  ContainerFiltros,
-  ContainerHeader,
-  ContainerTitulo,
-} from './styles';
+import { ContainerHeader, ContainerTitulo, Row } from './styles';
 
 interface IHomeScreenProps {
   children?: React.ReactNode;
@@ -29,102 +23,107 @@ interface IHomeScreenProps {
 const HomeScreen: React.FC<IHomeScreenProps> = () => {
   const [cidadeSelecionada, setCidadeSelecionada] = useState<string>('Santos');
   const [dadosCidade, setDadosCidade] = useState<ICidadeDados[] | undefined>();
-  const [isPrevisao, setIsPrevisao] = useState<boolean>(false);
   const [error, setError] = useState<string | undefined>();
   const cidades = useMemo(WeatherService.ListaCidades, []);
+
+  const getColor = (value: number) => {
+    if (value <= 2) {
+      return COLORS.success;
+    }
+
+    if (value <= 5) {
+      return COLORS.warning;
+    }
+
+    if (value <= 7) {
+      return COLORS.orange;
+    }
+
+    if (value <= 10) {
+      return COLORS.danger;
+    }
+
+    if (value >= 11) {
+      return COLORS.purple;
+    }
+  };
 
   useEffect(() => {
     setDadosCidade(undefined);
 
-    WeatherService.ListaInfosCidade(
-      cidades.find(c => c.nome === cidadeSelecionada)!,
-      isPrevisao,
-    )
-      .then(({ data }) => {
-        setDadosCidade(data.list);
-        setError(undefined);
-      })
-      .catch(err => {
-        console.error(err.response);
-        setError('Falha ao carregar dados.');
-      });
-  }, [cidadeSelecionada, isPrevisao]);
+    const cidade = cidades.find(c => c.nome === cidadeSelecionada);
+    if (cidade) {
+      WeatherService.ListaInfosCidadeAtual(cidade)
+        .then(({ data }) => {
+          WeatherService.ListaInfosCidadePrevisao(cidade)
+            .then(res => {
+              setDadosCidade([data, ...res.data]);
+              setError(undefined);
+            })
+            .catch(err => {
+              console.error(err.response);
+              setError('Falha ao carregar dados.');
+            });
+        })
+        .catch(err => {
+          console.error(err.response);
+          setError('Falha ao carregar dados.');
+        });
+    }
+  }, [cidadeSelecionada]);
 
-  const renderItem = ({ item }: { item: ICidadeDados }) => {
-    let aqi;
-    let aqiColor;
-
-    switch (item.main.aqi) {
-      case 1:
-        aqi = 'Boa';
-        aqiColor = COLORS.success;
-        break;
-      case 2:
-        aqi = 'Razoável';
-        aqiColor = COLORS.success;
-        break;
-      case 3:
-        aqi = 'Moderada';
-        aqiColor = COLORS.warning;
-        break;
-      case 4:
-        aqi = 'Ruim';
-        aqiColor = COLORS.danger;
-        break;
-      case 5:
-        aqi = 'Muito Ruim';
-        aqiColor = COLORS.danger;
-        break;
-      default:
-        aqi = 'Não Identificada';
-        aqiColor = COLORS.grayLight;
-        break;
+  const renderItem = ({
+    item,
+    index,
+  }: {
+    item: ICidadeDados;
+    index: number;
+  }) => {
+    if (index === 0) {
+      return <></>;
     }
 
     return (
-      <Accordion
-        content={
-          <>
-            <CustomText size={18} color="#ffffff" bold>
-              {formatApiDate(item.dt)}
+      <Row>
+        <Accordion
+          widthPercentage={64}
+          content={
+            <CustomText size={18} color="secondary" bold>
+              {formatApiDate(item.date)}
             </CustomText>
-
-            <CustomText size={18} color="#ffffff">
-              Qualidade do ar:{' '}
-              <CustomText size={18} color={aqiColor} bold>
-                {aqi}
-              </CustomText>
+          }
+        />
+        <Accordion
+          widthPercentage={34}
+          content={
+            <CustomText size={18} color={getColor(item.value)} bold>
+              {item.value}
             </CustomText>
-          </>
-        }
-        contentHidden={
-          <ContainerDado>
-            <CustomText size={18} color="#ffffff">
-              CO
-            </CustomText>
-
-            <CustomText size={18} color="#ffffff">
-              {item.components.co}μg/m3
-            </CustomText>
-          </ContainerDado>
-        }
-      />
+          }
+        />
+      </Row>
     );
   };
 
   return (
-    <>
+    <ImageBackground
+      style={{ flex: 1, justifyContent: 'center' }}
+      source={require('../../assets/images/background.png')}>
       {dadosCidade ? (
         <>
           <ContainerHeader>
             <ContainerTitulo>
-              <ArIcon width={36} height={45} />
+              <UvIcon width={36} height={45} />
 
               <Spacer right={4} />
 
-              <CustomText size={26} color="secondary" bold>
-                Qualidade do Ar
+              <CustomText size={26} color="#ffffff" bold>
+                Índice Ultravioleta
               </CustomText>
+
+              <Spacer left={4} />
+
+              <UvIcon width={36} height={45} />
             </ContainerTitulo>
 
             <Spacer top={16} />
@@ -139,30 +138,40 @@ const HomeScreen: React.FC<IHomeScreenProps> = () => {
               setValue={setCidadeSelecionada}
             />
 
-            <ContainerFiltros>
-              <Pressable
-                style={getOpacityByPress}
-                onPress={() => setIsPrevisao(false)}>
-                <CustomText
-                  size={24}
-                  bold={!isPrevisao}
-                  color={!isPrevisao ? COLORS.secondary : '#ffffff'}>
-                  Atual
-                </CustomText>
-              </Pressable>
+            <Spacer top={36} />
 
-              <Pressable
-                style={getOpacityByPress}
-                onPress={() => setIsPrevisao(true)}>
-                <CustomText
-                  size={24}
-                  bold={isPrevisao}
-                  color={isPrevisao ? COLORS.secondary : '#ffffff'}>
-                  Previsão
-                </CustomText>
-              </Pressable>
-            </ContainerFiltros>
+            <CustomText size={24} color="#ffffff" center bold>
+              Hoje
+            </CustomText>
+
+            <Row>
+              <Accordion
+                widthPercentage={64}
+                content={
+                  <CustomText size={18} color="secondary" bold>
+                    {formatApiDate(dadosCidade[0].date)}
+                  </CustomText>
+                }
+              />
+              <Accordion
+                widthPercentage={34}
+                content={
+                  <CustomText
+                    size={18}
+                    color={getColor(dadosCidade[0].value)}
+                    bold>
+                    {dadosCidade[0].value}
+                  </CustomText>
+                }
+              />
+            </Row>
           </ContainerHeader>
+
+          <CustomText size={24} color="#ffffff" center bold>
+            Próximos dias
+          </CustomText>
+
+          <Spacer top={-20} />
 
           <FlatList
             style={{ flex: 1 }}
@@ -172,7 +181,7 @@ const HomeScreen: React.FC<IHomeScreenProps> = () => {
           />
         </>
       ) : (
-        !error && <ActivityIndicator size="large" color={COLORS.secondary} />
+        !error && <ActivityIndicator size="large" color="#ffffff" />
       )}
 
       {error && (
@@ -180,7 +189,7 @@ const HomeScreen: React.FC<IHomeScreenProps> = () => {
           {error} Por favor, tente novamente.
         </CustomText>
       )}
-    </>
+    </ImageBackground>
   );
 };
 

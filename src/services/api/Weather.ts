@@ -1,20 +1,11 @@
-import { api, API_KEY, IBaseResponse } from '.';
+import { api, API_KEY } from '.';
 
 export interface ICidadeDados {
-  components: {
-    co: number;
-    nh3: number;
-    no: number;
-    no2: number;
-    o3: number;
-    pm2_5: number;
-    pm10: number;
-    so2: number;
-  };
-  dt: number;
-  main: {
-    aqi: number;
-  };
+  date: number;
+  date_iso: string;
+  lat: number;
+  lon: number;
+  value: number;
 }
 
 export interface ICidade {
@@ -24,20 +15,24 @@ export interface ICidade {
 }
 
 export const WeatherService = {
-  ListaInfosCidade: async (cidade: ICidade, isPrevisao: boolean) => {
-    return api.get<IBaseResponse<ICidadeDados[]>>(
-      isPrevisao
-        ? `air_pollution/forecast?lat=${cidade.lat}&lon=${cidade.lng}&appid=${API_KEY}`
-        : `air_pollution?lat=${cidade.lat}&lon=${cidade.lng}&appid=${API_KEY}`,
+  ListaInfosCidadeAtual: async (cidade: ICidade) => {
+    return api.get<ICidadeDados>(
+      `uvi?lat=${cidade.lat}&lon=${cidade.lng}&appid=${API_KEY}`,
+    );
+  },
+
+  ListaInfosCidadePrevisao: async (cidade: ICidade) => {
+    return api.get<ICidadeDados[]>(
+      `uvi/forecast?lat=${cidade.lat}&lon=${cidade.lng}&appid=${API_KEY}`,
     );
   },
 
   ListaCidades: (): ICidade[] => {
     return [
       {
-        nome: 'Cubatão',
-        lat: '-23.8681272',
-        lng: '-46.4790069',
+        nome: 'Brasília',
+        lat: '-15.7751885',
+        lng: '-48.3575891',
       },
       {
         nome: 'Santos',
@@ -70,9 +65,14 @@ export const WeatherService = {
         lng: '-47.1558979',
       },
       {
-        nome: 'Bertioga',
-        lat: '-23.7957362',
-        lng: '-46.2947978',
+        nome: 'México',
+        lat: '22.4887639',
+        lng: '-120.8802963',
+      },
+      {
+        nome: 'Reino Unido',
+        lat: '53.2208773',
+        lng: '-22.223376',
       },
     ];
   },

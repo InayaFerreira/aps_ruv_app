@@ -1,15 +1,20 @@
 import styled from 'styled-components/native';
 
-import { COLORS } from '@styles/colors';
+interface IContainerProps {
+  widthPercentage: number;
+}
 
-export const Container = styled.Pressable`
+export const Container = styled.Pressable<IContainerProps>`
   padding: 12px 0;
   margin: 4px 0;
-  background-color: ${COLORS.primaryLight};
+  width: ${props => props.widthPercentage}%;
+  background-color: #ffffff;
+  border-radius: 16px;
 `;
 
 export const ContainerContent = styled.View`
-  align-items: flex-start;
+  align-items: center;
+  justify-content: center;
   padding: 0px 16px 0px 24px;
   width: 87%;
 `;

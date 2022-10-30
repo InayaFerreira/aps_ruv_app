@@ -7,11 +7,3 @@ export const api = axios.create({
   baseURL: `${BASE_URL}`,
   timeout: 30000,
 });
-
-export interface IBaseResponse<T> {
-  coord: {
-    lat: number;
-    lon: number;
-  };
-  list: T;
-}

@@ -13,16 +13,22 @@ import {
 interface IAccordionProps {
   content: React.ReactNode;
   contentHidden?: React.ReactNode;
+  widthPercentage?: number;
   children?: React.ReactNode;
 }
 
-const Accordion: React.FC<IAccordionProps> = ({ content, contentHidden }) => {
+const Accordion: React.FC<IAccordionProps> = ({
+  content,
+  contentHidden,
+  widthPercentage = 100,
+}) => {
   const [isOpen, setIsOpen] = useState<boolean>(false);
 
   return (
     <Container
+      widthPercentage={widthPercentage}
       style={({ pressed }) => [getOpacityByPress({ pressed: pressed }), shadow]}
-      onPress={() => setIsOpen(!isOpen)}>
+      onPress={contentHidden !== undefined ? () => setIsOpen(!isOpen) : null}>
       <ContainerClosed>
         <ContainerContent>{content}</ContainerContent>
       </ContainerClosed>
