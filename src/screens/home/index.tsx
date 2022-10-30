@@ -108,7 +108,7 @@ const HomeScreen: React.FC<IHomeScreenProps> = () => {
   return (
     <ImageBackground
       style={{ flex: 1, justifyContent: 'center' }}
-      source={require('../../assets/images/background.png')}>
+      source={require('../../assets/images/background2.png')}>
       {dadosCidade ? (
         <>
           <ContainerHeader>
